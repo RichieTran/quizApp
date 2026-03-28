@@ -4,6 +4,10 @@ import pickle
 import datetime
 import random
 
+USERS_FILE = 'users.pkl'
+USER_DATA_FILE = 'user_data.pkl'
+SCORE_HISTORY_FILE = 'score_history.pkl'
+
 class Quiz:
     def __init__(self, username):
         self.username = username
@@ -40,21 +44,31 @@ class Quiz:
         return questions
 
     def load_user_data(self):
-        if os.path.exists('users.pkl'):
-            with open('users.pkl', 'rb') as f:
-                users = pickle.load(f)
-            return users.get(self.username, {})
+        if os.path.exists(USER_DATA_FILE):
+            with open(USER_DATA_FILE, 'rb') as f:
+                all_data = pickle.load(f)
+            return all_data.get(self.username, {})
         return {}
 
     def save_user_data(self):
-        if os.path.exists('users.pkl'):
-            with open('users.pkl', 'rb') as f:
-                users = pickle.load(f)
+        if os.path.exists(USER_DATA_FILE):
+            with open(USER_DATA_FILE, 'rb') as f:
+                all_data = pickle.load(f)
         else:
-            users = {}
-        users[self.username] = self.user_data
-        with open('users.pkl', 'wb') as f:
-            pickle.dump(users, f)
+            all_data = {}
+        all_data[self.username] = self.user_data
+        with open(USER_DATA_FILE, 'wb') as f:
+            pickle.dump(all_data, f)
+
+    def append_score_history(self, score_entry):
+        if os.path.exists(SCORE_HISTORY_FILE):
+            with open(SCORE_HISTORY_FILE, 'rb') as f:
+                history = pickle.load(f)
+        else:
+            history = {}
+        history.setdefault(self.username, []).append(score_entry)
+        with open(SCORE_HISTORY_FILE, 'wb') as f:
+            pickle.dump(history, f)
 
     def select_category(self):
         categories = set(q['category'] for q in self.questions)
@@ -78,11 +92,14 @@ class Quiz:
 
     def get_questions_for_category(self):
         qs = [q for q in self.questions if q['category'] == self.category]
-        # To influence future selections, sort by feedback
+        # To influence future selections, sort by feedback and randomize each bucket for variety
         feedback = self.user_data.get('feedback', {})
         liked = [q for q in qs if feedback.get(q['question'], '') == 'like']
         disliked = [q for q in qs if feedback.get(q['question'], '') == 'dislike']
         neutral = [q for q in qs if q['question'] not in feedback]
+        random.shuffle(liked)
+        random.shuffle(neutral)
+        random.shuffle(disliked)
         # Prefer liked, then neutral, then disliked
         qs = liked + neutral + disliked
         return qs
@@ -135,7 +152,11 @@ class Quiz:
                 except ValueError:
                     print("Invalid Answer")
         elif q['type'] == 'short_answer':
-            user_ans = input("Your answer: ").strip()
+            while True:
+                user_ans = input("Your answer: ").strip()
+                if user_ans:
+                    break
+                print("Invalid Answer")
         else:
             print("Unknown question type")
             return
@@ -171,11 +192,12 @@ class Quiz:
     def save_results(self):
         self.user_data['streak'] = self.current_streak
         self.user_data['max_streak'] = self.max_streak
-        scores = self.user_data.setdefault('scores', [])
-        scores.append({
+        self.save_user_data()
+
+        score_entry = {
             'date': datetime.datetime.now().isoformat(),
             'category': self.category,
             'score': f"{self.correct}/{self.total}",
             'streak': self.current_streak
-        })
-        self.save_user_data()
+        }
+        self.append_score_history(score_entry)

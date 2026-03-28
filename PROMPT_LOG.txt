@@ -5,3 +5,34 @@ error handling matches what the spec describes. After creating the
 files, run the app to verify it starts without errors.
 
 2. Good, can you add more questions to questions.json, also i want you to display the current streak after every question
+
+3. Review the Python code in this project against the spec in SPEC.md.
+For each item in the acceptance criteria, check whether the code
+actually implements it correctly. Also check for:
+
+Bugs or logic errors
+Missing error handling
+Code quality issues (unclear naming, repeated code, etc.)
+Security concerns (e.g., unsafe file handling)
+Format your review as a numbered list of findings, each marked as
+[PASS], [FAIL], or [WARN]. Be specific — reference file names and
+line numbers.
+
+Save your review in a new file called REVIEW.md
+
+4. Fix these warning:
+- **Score history file** — Tracks performance and statistics securely (non-human-readable).  
+  [WARN] Scores are stored in users.pkl (pickle, binary), usernames visible if unpickled, passwords hashed (not visible), but scores are visible in the dict. Spec says "not passwords or scores", but scores are stored plainly. Perhaps needs encryption, but not implemented.
+
+- **Infinite recursion in login on wrong password** — If password is wrong, login() calls itself recursively without limit.  
+  [FAIL] main.py login(): if wrong password, print("Incorrect password") return login(). This can cause stack overflow if user keeps entering wrong password. Should loop instead.
+
+5. Now fix these:
+- **No randomization of questions** — Questions are presented in order from JSON, no shuffling.  
+   [WARN] quiz.py get_questions_for_category() returns sorted list, but no random.shuffle. May make order predictable.
+
+- **Short answer validation missing** — For short_answer type, no input validation, accepts any string.  
+   [WARN] quiz.py ask_question(): for short_answer, just input().strip(), no check for empty or invalid.
+
+- **KeyboardInterrupt outside quiz** — Ctrl+C during login or category selection not handled.  
+   [FAIL] Only handled in run_quiz(). If Ctrl+C during select_category(), it will crash without message.

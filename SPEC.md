@@ -37,7 +37,7 @@ Your question bank should be a JSON file using the format below:
       "question": "Return the last element from a list, A, of unknown size:",
       "type": "short_answer",
       "answer": "A[-1]",
-      "category": "Python Basics"
+      "category": "Data Structures"
     }
   ]
 }

@@ -1,0 +1,7 @@
+1. Read SPEC.md in this project. Implement the full quiz application
+exactly as specified. Create all necessary files. Include the sample
+questions from the spec in the question bank JSON file. Make sure
+error handling matches what the spec describes. After creating the
+files, run the app to verify it starts without errors.
+
+2. Good, can you add more questions to questions.json, also i want you to display the current streak after every question
